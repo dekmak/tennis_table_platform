@@ -12,7 +12,6 @@ async function getDisplayGames (knex, args) {
       'game.game_id',
       'game.event_name',
       'game.subevent_name',
-      'game.nb_rounds',
       'p1.player_name as player_1_name',
       'p2.player_name as player_2_name',
       'p1.profile_pic as player_1_profile',
@@ -54,24 +53,9 @@ async function addGame (knex, args) {
   return Promise.resolve(res[0])
 }
 
-async function createGameRound (knex, args) {
-  const input = {
-    game_id: args.game_id,
-    round_nb: args.round_nb
-  }
-  const res = await knex(`${dbschema}.game_round`).insert(input).returning('*')
-  if (res === null || res.length === 0) {
-    console.log("Couldn't insert record")
-    return {}
-  }
-  console.log(`inserted new gameRound:\n${JSON.stringify(res)}`)
-  return Promise.resolve(res[0])
-}
-
 async function addGamePoint (knex, args) {
   const input = {
     game_id: args.game_id,
-    round_nb: args.round_nb,
     player_id: args.player_id
   }
   const res = await knex(`${dbschema}.game_point`).insert(input).returning('*')
@@ -81,11 +65,53 @@ async function addGamePoint (knex, args) {
   }
   console.log(`inserted new gamePoint:\n${JSON.stringify(res)}`)
 
-  // TODO: run calculations here.
+  await knex.raw(`
+    UPDATE ${dbschema}.game
+      SET player_1_score = (SELECT COUNT(*) FROM ${dbschema}.game_point WHERE game_point.player_id = game.player_1 AND game_point.game_id = game.game_id);
+    UPDATE ${dbschema}.game
+      SET player_2_score = (SELECT COUNT(*) FROM ${dbschema}.game_point WHERE game_point.player_id = game.player_2 AND game_point.game_id = game.game_id);`)
 
-  const roundRes = await knex(`${dbschema}.game_round`)
-    .where('game_id', args.game_id)
-    .andWhere('round_nb', args.round_nb)
+  let roundRes = await knex(`${dbschema}.game`).where('game_id', args.game_id)
+
+  // TODO : if winner found, set winner id and increase score
+
+  const player1Scores = roundRes[0].player_1_score
+  const player2Scores = roundRes[0].player_2_score
+
+  let isEnded = false
+  if (player1Scores > 10 && player2Scores < (player1Scores - 2)) {
+    // set player 1 as winner
+    await knex.raw(
+      `UPDATE ${dbschema}.game SET winner_id = player_1, end_time = '${new Date().toISOString()}' WHERE game_id = ${
+        args.game_id
+      };`
+    )
+    isEnded = true
+  } else if (player2Scores > 10 && player1Scores < (player2Scores - 2)) {
+    // set player 2 as winner
+    await knex.raw(
+      `UPDATE ${dbschema}.game SET winner_id = player_2, end_time = '${new Date().toISOString()}' WHERE game_id = ${
+        args.game_id
+      };`
+    )
+    isEnded = true
+  }
+  if (isEnded) {
+    await knex.raw(`
+    UPDATE ${dbschema}.player_rank
+      SET total_points = 
+        COALESCE(
+          (SELECT SUM(player_1_score)
+           FROM ${dbschema}.game
+           WHERE player_1 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0) + 
+        COALESCE(
+          (SELECT SUM(player_2_score)
+           FROM ${dbschema}.game
+           WHERE player_2 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0)
+    `)
+    roundRes = await knex(`${dbschema}.game`).where('game_id', args.game_id)
+  }
+
   return Promise.resolve(roundRes[0])
 }
 
@@ -93,7 +119,6 @@ module.exports = {
   getGames,
   getGame,
   addGame,
-  createGameRound,
   addGamePoint,
   getDisplayGames
 }

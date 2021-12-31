@@ -137,11 +137,6 @@ custom:
         field: addGamePoint
         request: generic-request-mapping-template.vtl
         response: generic-response-mapping-template.vtl
-      - dataSource: Lambda
-        type: Mutation
-        field: createGameRound
-        request: generic-request-mapping-template.vtl
-        response: generic-response-mapping-template.vtl
       
     schema: schema.graphql
     dataSources:
