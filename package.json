@@ -1,7 +1,11 @@
 {
-  "name": "tennisapp-platform",
-  "version": "0.0.1",
-  "description": "tennisapp serverless platform",
+  "name": "tennis-table-scoring-application-backend",
+  "version": "1.0.0",
+  "description": "A Serverless back-end managing Tennis Table (Ping pong) games and players with scoring feature.",
+  "author": {
+    "name": "Ahmad Dekmak",
+    "url": "https://github.com/dekmak"
+  },
   "main": "index.js",
   "scripts": {
     "test-function": "./node_modules/.bin/mocha --recursive ./modules/$npm_config_function/test/*",
@@ -12,7 +16,6 @@
     "deploy": "env-cmd ./.bin/serverless-deploy.sh",
     "deploy-function": "npx sls deploy function --function StreamPostProcessor"
   },
-  "author": "Ahmad Dekmak",
   "license": "MIT",
   "homepage": "https://github.com/dekmak/tennis_table_platform#readme",
   "devDependencies": {

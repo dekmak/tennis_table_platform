@@ -2,6 +2,9 @@
 
 Serverless back-end for graphQl API and database management
 
+![version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![license](https://img.shields.io/badge/license-MIT-blue.svg)
+
 ## Install
 
 ``
@@ -32,3 +35,6 @@ For npm scripts to work, set bash as your default shell (assuming you have gitba
 npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
 ```
 Source: https://stackoverflow.com/a/46006249
+
+## Authors
+- [@dekmak](https://www.github.com/dekmak)
