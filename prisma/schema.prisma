@@ -8,10 +8,51 @@ datasource db {
 }
 
 model player {
-  player_id           Int       @id @db.Integer
-  player_name         String?   @db.VarChar(255)
-  profile_pic         String    @db.VarChar(500)
-  age                 Int       @db.Integer
-  country             String    @db.VarChar(5)
-  created_at          DateTime  @default(now()) @db.Timestamptz
+  player_id           Int         @id @default(autoincrement())
+  player_name         String?     @db.VarChar(255)
+  profile_pic         String      @db.VarChar(500)
+  age                 Int         @db.Integer
+  country             String      @db.VarChar(5)
+  created_at          DateTime    @default(now()) @db.Timestamptz
+}
+
+model player_rank {
+  rank_id             Int         @id @default(autoincrement())
+  player_id           Int         @db.Integer
+  game_type           String      @db.VarChar(100)
+  rank                Int         @db.Integer
+  total_points        Int         @db.Integer
+  calculated_at       DateTime    @default(now()) @db.Timestamptz
+}
+
+model game {
+  game_id             Int         @id @default(autoincrement())
+  event_name          String      @db.VarChar(255)
+  subevent_name       String      @db.VarChar(255)
+  player_1            Int         @db.Integer
+  player_2            Int         @db.Integer
+  player_1_score      Int         @default(0) @db.Integer
+  player_2_score      Int         @default(0) @db.Integer
+  winner_id           Int?        @db.Integer
+  nb_rounds           Int         @default(0) @db.Integer
+  start_time          DateTime    @default(now()) @db.Timestamptz
+  end_time            DateTime?   @db.Timestamptz
+}
+
+model game_point {
+  point_id            Int         @id @default(autoincrement())
+  player_id           Int         @db.Integer
+  round_nb            Int         @db.Integer
+  game_id             Int         @db.Integer
+  record_time         DateTime    @default(now()) @db.Timestamptz
+}
+
+model game_round {
+  round_id            Int         @id @default(autoincrement())
+  game_id             Int         @db.Integer
+  round_nb            Int         @db.Integer
+  player_1_points     Int         @default(0) @db.Integer
+  player_2_points     Int         @default(0) @db.Integer
+  round_winner_id     Int?        @db.Integer
+  updated_time        DateTime    @default(now()) @db.Timestamptz
 }
