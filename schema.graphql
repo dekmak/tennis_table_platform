@@ -15,8 +15,7 @@ type Mutation {
 	addPlayer(input: AddPlayerInput!): Player!
 	addGame(input: AddGameInput!): Game!
 
-	createGameRound(game_id: Int!, round_nb: Int!): GameRound!
-	addGamePoint(game_id: Int!, round_nb: Int!, player_id: Int!): GameRound!
+	addGamePoint(game_id: Int!, player_id: Int!): Game!
 }
 
 type Player {
@@ -38,7 +37,6 @@ type Game {
 	player_1_score: Int
 	player_2_score: Int
 	winner_id: Int
-	nb_rounds: Int!
 	start_time: AWSDateTime!
 	end_time: AWSDateTime    
 }
@@ -53,22 +51,14 @@ type DisplayGame {
 	player_2_profile: String!
 	player_1_score: Int
 	player_2_score: Int
-	nb_rounds: Int
 	score_description: String
-}
-
-type GameRound {
-	game_id: ID!
-	round_nb : Int!
-	player_1_points: Int!
-	player_2_points: Int!
-	winner_id: Int
 }
 
 type Rank {
 	rank: Int!
 	game_type: String!
 	player_id: Int!
+	total_points: Int!
 	player_name: String!
 	player_country: String!
 	player_profile_pic: String!

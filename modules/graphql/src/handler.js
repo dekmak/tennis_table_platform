@@ -3,7 +3,7 @@ const connections = require('../../../config/connections')
 
 const { getRanks } = require('../lib/ranksResolver')
 const { getPlayers, getPlayer, addPlayer } = require('../lib/playerResolver')
-const { getGames, getDisplayGames, getGame, addGame, createGameRound, addGamePoint } = require('../lib/gameResolver')
+const { getGames, getDisplayGames, getGame, addGame, addGamePoint } = require('../lib/gameResolver')
 
 exports.graphqlHandler = async (event, context) => {
   context.callbackWaitsForEmptyEventLoop = false
@@ -40,10 +40,6 @@ exports.graphqlHandler = async (event, context) => {
       }
       case 'displayGames': {
         result = await getDisplayGames(knex, event.arguments)
-        break
-      }
-      case 'createGameRound': {
-        result = await createGameRound(knex, event.arguments)
         break
       }
       case 'addGamePoint': {

@@ -2,8 +2,9 @@
 const dbschema = process.env.DB_SCHEMA
 
 async function getPlayers (knex, args) {
-  // TODO: calculate total_points
   return await knex(`${dbschema}.player`)
+    .leftJoin(`${dbschema}.player_rank`, 'player.player_id', 'player_rank.player_id')
+    .select('player.player_id', 'player.player_name', 'player.profile_pic', 'player.age', 'player.country', 'player_rank.total_points')
 }
 
 async function getPlayer (knex, args) {

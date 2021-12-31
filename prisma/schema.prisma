@@ -34,7 +34,6 @@ model game {
   player_1_score      Int         @default(0) @db.Integer
   player_2_score      Int         @default(0) @db.Integer
   winner_id           Int?        @db.Integer
-  nb_rounds           Int         @default(0) @db.Integer
   start_time          DateTime    @default(now()) @db.Timestamptz
   end_time            DateTime?   @db.Timestamptz
 }
@@ -42,17 +41,6 @@ model game {
 model game_point {
   point_id            Int         @id @default(autoincrement())
   player_id           Int         @db.Integer
-  round_nb            Int         @db.Integer
   game_id             Int         @db.Integer
   record_time         DateTime    @default(now()) @db.Timestamptz
-}
-
-model game_round {
-  round_id            Int         @id @default(autoincrement())
-  game_id             Int         @db.Integer
-  round_nb            Int         @db.Integer
-  player_1_points     Int         @default(0) @db.Integer
-  player_2_points     Int         @default(0) @db.Integer
-  round_winner_id     Int?        @db.Integer
-  updated_time        DateTime    @default(now()) @db.Timestamptz
 }
