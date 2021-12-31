@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "experimentalDecorators": true,
+      "preserveConstEnums": true,
+      "strict": true,
+      "sourceMap": true,
+      "allowJs": true,
+      "target": "es6",
+      "outDir": ".build",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "rootDir": "./",
+      "noImplicitAny": true
+    }
+  }

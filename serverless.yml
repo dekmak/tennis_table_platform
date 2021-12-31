@@ -1,0 +1,250 @@
+service: tennistable-app
+frameworkVersion: "2"
+useDotenv: true
+configValidationMode: error
+plugins:
+  - serverless-plugin-lambda-dead-letter
+  - serverless-offline
+  - serverless-appsync-plugin
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, "dev"}
+  region: ${self:custom.config.region}
+  vpc: ${self:custom.config.${env:COMMON_ENV}.vpc}
+  tracing:
+    lambda: true
+    apiGateway: true
+  timeout: 900
+  memorySize: 1024
+  environment:
+    NODE_ENV: ${self:custom.${self:provider.stage}.nodeEnv}
+    DB_ENV: ${self:custom.${self:provider.stage}.dbEnv}
+    DB_SCHEMA: ${self:custom.${self:provider.stage}.dbSchema}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: cloudwatch:PutMetricAlarm
+          Resource: "*"
+        - Effect: "Allow"
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+          Resource:
+            - arn:aws:logs:*:*:*
+        - Effect: "Allow"
+          Action:
+            - sns:*
+          Resource:
+            - arn:aws:sns:${self:provider.region}:${self:custom.config.account}:${self:custom.prefix}-*
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          Resource:
+            - arn:aws:ssm:${self:provider.region}:${self:custom.config.account}:parameter/${self:custom.prefix}-*
+        - Effect: "Allow"
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - arn:aws:secretsmanager:${self:provider.region}:${self:custom.config.account}:secret
+            - arn:aws:secretsmanager:${self:provider.region}:${self:custom.config.account}:secret:*
+
+custom:
+  prefix: ${self:provider.stage}-${self:service}
+  commonEnvPrefix: ${env:COMMON_ENV}-${self:service}
+  config:
+    systemSupportEmailAddress: ahmeddekmak@gamil.com
+    account: 000636511576
+    region: us-east-2
+    nonprod:
+      vpcId: vpc-0ae7edd92ea702b47
+      vpc:
+        securityGroupIds:
+          - Fn::GetAtt:
+              - LambdaSG
+              - GroupId
+        subnetIds:
+          - subnet-0d1885a4776f60f1c
+          - subnet-02866a027e517f27f
+          - subnet-0c9810efc5c468eff
+  dev:
+    dbSchema: dev_platform
+    dbEnv: nonprod
+    nodeEnv: development
+
+  appSync:
+    name: ${self:custom.prefix}-appsync
+    authenticationType: API_KEY
+    logConfig:
+      loggingRoleArn: { Fn::GetAtt: [AppSyncServiceRole, Arn] }
+      level: ALL # Logging Level: NONE | ERROR | ALL
+      excludeVerboseContent: false
+    mappingTemplates:
+
+      # Players
+      - dataSource: Lambda
+        type: Query
+        field: player
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      - dataSource: Lambda
+        type: Query
+        field: players
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl 
+      - dataSource: Lambda
+        type: Mutation
+        field: addPlayer
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+
+      # # Games
+      # - dataSource: Lambda
+      #   type: Mutation
+      #   field: addGame
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+      # - dataSource: Lambda
+      #   type: Query
+      #   field: getGame
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+      # - dataSource: Lambda
+      #   type: Query
+      #   field: getGames
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+
+      # # Scoring
+      # - dataSource: Lambda
+      #   type: Mutation
+      #   field: addPoint
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+      # - dataSource: Lambda
+      #   type: Mutation
+      #   field: addRound
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+      # - dataSource: Lambda
+      #   type: Query
+      #   field: getRanks
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+      # - dataSource: Lambda
+      #   type: Query
+      #   field: getRounds
+      #   request: generic-request-mapping-template.vtl
+      #   response: generic-response-mapping-template.vtl
+
+    schema: schema.graphql
+    dataSources:
+      - type: AWS_LAMBDA
+        name: Lambda
+        description: "Lambda DataSource for GraphQl"
+        config:
+          lambdaFunctionArn: arn:aws:lambda:${self:provider.region}:${self:custom.config.account}:function:${self:custom.prefix}-graphql
+          serviceRoleArn: { Fn::GetAtt: [AppSyncServiceRole, Arn] }
+
+package:
+  individually: true
+  excludeDevDependencies: false
+  patterns:
+    - "!./**"
+    - commonLib/**
+    - config/**
+layers:
+  libNodeModule:
+    compatibleRuntimes:
+      - nodejs12.x
+    path: layers/libNodeModules
+    name: ${self:custom.prefix}-node_modules
+    description: "Layer including all node modules"
+    package:
+      patterns:
+        - "./**"
+        - '!nodejs/node_modules/@prisma/engines/**'
+
+functions:
+  graphql:
+    name: ${self:custom.prefix}-graphql
+    handler: modules/graphql/src/handler.graphqlHandler
+    description: "Graphql Handler"
+    layers:
+      - { Ref: LibNodeModuleLambdaLayer }
+    package:
+      patterns:
+        - "!modules/**"
+        - "modules/graphql/**"
+
+resources:
+  Resources:
+    LambdaSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: ${self:custom.prefix}-lambda-sg
+        GroupDescription: Lambda Security Group
+        SecurityGroupEgress:
+          - IpProtocol: tcp
+            FromPort: 0
+            ToPort: 65535
+            CidrIp: 0.0.0.0/0
+        VpcId: ${self:custom.config.${env:COMMON_ENV}.vpcId}
+    FailureStatusNotification:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: ${self:custom.prefix}-failure-notification
+        TopicName: ${self:custom.prefix}-failure-notification
+
+    # ROLES
+    AppSyncServiceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.prefix}-AppSyncServiceRole
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service:
+                  - appsync.amazonaws.com
+                  - rds.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          - PolicyName: ${self:custom.prefix}-IamPolicyDynamodb
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - rds:*
+                    - rds-data:*
+                  Resource:
+                    - arn:aws:rds:${self:provider.region}:${self:custom.config.account}:cluster:${env:COMMON_ENV}-*
+                - Effect: "Allow"
+                  Action:
+                    - "lambda:invokeFunction"
+                  Resource:
+                    - arn:aws:lambda:${self:provider.region}:${self:custom.config.account}:function:${self:custom.prefix}-*
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - logs:DescribeLogStreams
+                  Resource:
+                    - arn:aws:logs:*:*:*
+
+    # S3 Buckets 
+    PlayersS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties: 
+        BucketName: ${self:custom.prefix}-players
+        AccessControl: PublicRead

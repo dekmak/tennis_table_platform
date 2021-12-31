@@ -1,0 +1,32 @@
+type Query {
+
+	player(player_id: ID!): Player!
+	players: [Player]!
+}
+
+type Mutation {
+	
+	addPlayer(input: AddPlayerInput!): Player!
+
+}
+
+type Player {
+	player_id: ID!
+	player_name: String!
+	profile_pic: String!
+	age: Int!
+	country: String!
+	created_at: AWSDateTime!
+}
+
+input AddPlayerInput {
+	player_name: String!
+	profile_pic: String!
+	age: Int!
+	country: String!
+}
+
+schema {
+	query: Query
+	mutation: Mutation
+}
