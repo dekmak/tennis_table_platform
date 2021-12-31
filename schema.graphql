@@ -1,13 +1,22 @@
 type Query {
 
-	player(player_id: ID!): Player!
 	players: [Player]!
+	player(player_id: ID!): Player!
+	
+	games: [Game]!
+	game(game_id: ID!): Game!
+	displayGames: [DisplayGame]!
+
+	ranks: [Rank]!
 }
 
 type Mutation {
 	
 	addPlayer(input: AddPlayerInput!): Player!
+	addGame(input: AddGameInput!): Game!
 
+	createGameRound(game_id: Int!, round_nb: Int!): GameRound!
+	addGamePoint(game_id: Int!, round_nb: Int!, player_id: Int!): GameRound!
 }
 
 type Player {
@@ -17,6 +26,52 @@ type Player {
 	age: Int!
 	country: String!
 	created_at: AWSDateTime!
+	total_points: Int
+}
+
+type Game {
+	game_id: ID!
+	event_name : String!
+	subevent_name: String!
+	player_1: Int!
+	player_2: Int!
+	player_1_score: Int
+	player_2_score: Int
+	winner_id: Int
+	nb_rounds: Int!
+	start_time: AWSDateTime!
+	end_time: AWSDateTime    
+}
+
+type DisplayGame {
+	game_id: ID!
+	event_name : String!
+	subevent_name: String!
+	player_1_name: String!
+	player_2_name: String!
+	player_1_profile: String!
+	player_2_profile: String!
+	player_1_score: Int
+	player_2_score: Int
+	nb_rounds: Int
+	score_description: String
+}
+
+type GameRound {
+	game_id: ID!
+	round_nb : Int!
+	player_1_points: Int!
+	player_2_points: Int!
+	winner_id: Int
+}
+
+type Rank {
+	rank: Int!
+	game_type: String!
+	player_id: Int!
+	player_name: String!
+	player_country: String!
+	player_profile_pic: String!
 }
 
 input AddPlayerInput {
@@ -24,6 +79,13 @@ input AddPlayerInput {
 	profile_pic: String!
 	age: Int!
 	country: String!
+}
+
+input AddGameInput {
+	player_1: Int!
+	player_2: Int!
+	event_name: String!
+	subevent_name: String!
 }
 
 schema {

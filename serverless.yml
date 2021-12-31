@@ -59,7 +59,7 @@ custom:
   commonEnvPrefix: ${env:COMMON_ENV}-${self:service}
   config:
     systemSupportEmailAddress: ahmeddekmak@gamil.com
-    account: 000636511576
+    account: '000636511576'
     region: us-east-2
     nonprod:
       vpcId: vpc-0ae7edd92ea702b47
@@ -103,45 +103,46 @@ custom:
         request: generic-request-mapping-template.vtl
         response: generic-response-mapping-template.vtl
 
-      # # Games
-      # - dataSource: Lambda
-      #   type: Mutation
-      #   field: addGame
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
-      # - dataSource: Lambda
-      #   type: Query
-      #   field: getGame
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
-      # - dataSource: Lambda
-      #   type: Query
-      #   field: getGames
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
+      # Games
+      - dataSource: Lambda
+        type: Mutation
+        field: addGame
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      - dataSource: Lambda
+        type: Query
+        field: game
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      - dataSource: Lambda
+        type: Query
+        field: games
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      - dataSource: Lambda
+        type: Query
+        field: displayGames
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
 
-      # # Scoring
-      # - dataSource: Lambda
-      #   type: Mutation
-      #   field: addPoint
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
-      # - dataSource: Lambda
-      #   type: Mutation
-      #   field: addRound
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
-      # - dataSource: Lambda
-      #   type: Query
-      #   field: getRanks
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
-      # - dataSource: Lambda
-      #   type: Query
-      #   field: getRounds
-      #   request: generic-request-mapping-template.vtl
-      #   response: generic-response-mapping-template.vtl
+      # Scoring
+      - dataSource: Lambda
+        type: Query
+        field: ranks
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
 
+      - dataSource: Lambda
+        type: Mutation
+        field: addGamePoint
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      - dataSource: Lambda
+        type: Mutation
+        field: createGameRound
+        request: generic-request-mapping-template.vtl
+        response: generic-response-mapping-template.vtl
+      
     schema: schema.graphql
     dataSources:
       - type: AWS_LAMBDA
@@ -181,6 +182,16 @@ functions:
       patterns:
         - "!modules/**"
         - "modules/graphql/**"
+  calculations:
+    name: ${self:custom.prefix}-calculations
+    handler: modules/graphql/src/handler.calculationslHandler
+    description: "Calculations Handler"
+    layers:
+      - { Ref: LibNodeModuleLambdaLayer }
+    package:
+      patterns:
+        - "!modules/**"
+        - "modules/calculations/**"
 
 resources:
   Resources:
