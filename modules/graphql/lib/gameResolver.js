@@ -97,18 +97,29 @@ async function addGamePoint (knex, args) {
     isEnded = true
   }
   if (isEnded) {
+    // Update 'total_points'
     await knex.raw(`
-    UPDATE ${dbschema}.player_rank
-      SET total_points = 
-        COALESCE(
-          (SELECT SUM(player_1_score)
-           FROM ${dbschema}.game
-           WHERE player_1 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0) + 
-        COALESCE(
-          (SELECT SUM(player_2_score)
-           FROM ${dbschema}.game
-           WHERE player_2 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0)
-    `)
+      UPDATE ${dbschema}.player_rank
+        SET total_points = 
+          COALESCE(
+            (SELECT SUM(player_1_score)
+            FROM ${dbschema}.game
+            WHERE player_1 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0) + 
+          COALESCE(
+            (SELECT SUM(player_2_score)
+            FROM ${dbschema}.game
+            WHERE player_2 = player_rank.player_id AND winner_id IS NOT NULL AND winner_id = player_rank.player_id),0)
+      `)
+
+    // Update 'rank'
+    await knex.raw(`
+      UPDATE ${dbschema}.player_rank r1
+        SET r1.rank = r2.seqnum
+      FROM (SELECT r2.*,  ROW_NUMBER() OVER () AS seqnum
+            FROM ${dbschema}.player_rank r2) r2
+        WHERE r1.player_id = r2.player_id
+      `)
+
     roundRes = await knex(`${dbschema}.game`).where('game_id', args.game_id)
   }
 
