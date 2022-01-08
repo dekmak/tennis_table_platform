@@ -113,11 +113,11 @@ async function addGamePoint (knex, args) {
 
     // Update 'rank'
     await knex.raw(`
-      UPDATE ${dbschema}.player_rank r1
-        SET rank = r2.seqnum
-      FROM (SELECT r2.*,  ROW_NUMBER() OVER () AS seqnum
-            FROM ${dbschema}.player_rank r2) r2
-        WHERE r1.player_id = r2.player_id
+    UPDATE  ${dbschema}.player_rank r1
+      SET rank = r3.seqnum
+    FROM (SELECT r2.player_id, ROW_NUMBER() OVER (ORDER BY total_points DESC) AS seqnum
+          FROM  ${dbschema}.player_rank r2) r3
+      WHERE r1.player_id = r3.player_id
       `)
 
     roundRes = await knex(`${dbschema}.game`).where('game_id', args.game_id)
