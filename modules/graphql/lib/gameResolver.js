@@ -114,7 +114,7 @@ async function addGamePoint (knex, args) {
     // Update 'rank'
     await knex.raw(`
       UPDATE ${dbschema}.player_rank r1
-        SET r1.rank = r2.seqnum
+        SET rank = r2.seqnum
       FROM (SELECT r2.*,  ROW_NUMBER() OVER () AS seqnum
             FROM ${dbschema}.player_rank r2) r2
         WHERE r1.player_id = r2.player_id
